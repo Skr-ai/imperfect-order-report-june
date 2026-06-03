@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高校不完美订单改善趋势日报</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; padding: 0 24px 24px; color: #1a202c; }
+.site-bar { display: flex; align-items: center; padding: 18px 0; margin-bottom: 20px; }
+.site-bar .site-logo { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d8b4fe, #9333ea 40%, #581c87 65%, #2e0a4d 100%); box-shadow: 0 2px 8px rgba(147,51,234,0.3), inset 0 -2px 4px rgba(0,0,0,0.3); margin-right: 8px; position: relative; overflow: hidden; }
+.site-bar .site-logo::before { content: ''; position: absolute; top: 4px; left: 5px; width: 8px; height: 8px; background: radial-gradient(circle, rgba(255,255,255,0.75), rgba(255,255,255,0) 70%); border-radius: 50%; }
+.site-bar .site-logo::after { content: ''; position: absolute; top: 3px; right: 6px; width: 3px; height: 3px; background: rgba(255,255,255,0.55); border-radius: 50%; }
+.site-bar a { display: flex; align-items: center; text-decoration: none; }
+.site-bar .site-name { font-size: 14px; font-weight: 600; color: #374151; }
+.container { max-width: 960px; margin: 0 auto; }
+.header { text-align: center; margin-bottom: 32px; }
+.header h1 { font-size: 22px; color: #1a202c; font-weight: 700; margin-bottom: 4px; }
+.header .subtitle { color: #6b7280; font-size: 13px; }
+.summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px; }
+.card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.card .label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+.card .value { font-size: 26px; font-weight: 700; }
+.card .change { font-size: 12px; margin-top: 3px; }
+.card .change.up { color: #dc2626; }
+.card .change.down { color: #16a34a; }
+.section { background: white; border-radius: 12px; padding: 22px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #ededed; }
+.section h2 { font-size: 13px; color: #6b7280; margin-bottom: 6px; font-weight: 500; }
+.section .kpi-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+.section .kpi-value { font-size: 30px; font-weight: 600; color: #1a1f36; letter-spacing: -0.5px; }
+.section .kpi-delta { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.section .kpi-delta.up { background: #ffeff0; color: #cd3d63; }
+.section .kpi-delta.down { background: #e6f8ed; color: #198a3f; }
+.section .legend-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.section .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
+.section .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.chart-container { position: relative; height: 240px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 8px 10px; text-align: right; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
+th:first-child { text-align: left; }
+td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #f3f4f6; }
+td:first-child { text-align: left; font-weight: 500; color: #374151; }
+.trend-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.trend-badge.up { background: #fef2f2; color: #dc2626; }
+.trend-badge.down { background: #f0fdf4; color: #16a34a; }
+.trend-badge.flat { background: #f3f4f6; color: #6b7280; }
+.table-scroll { max-height: 280px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px; }
+.table-scroll table { border-collapse: separate; border-spacing: 0; }
+.table-scroll thead { position: sticky; top: 0; z-index: 1; }
+.table-scroll thead th { background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
+.table-scroll::-webkit-scrollbar { width: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 3px; }
+.table-scroll::-webkit-scrollbar-thumb { background: #c4c8cf; border-radius: 3px; }
+.table-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+.station-box { padding: 22px !important; }
+.station-scroll { max-height: 600px; overflow-y: auto; padding-right: 4px; }
+.station-scroll::-webkit-scrollbar { width: 5px; }
+.station-scroll::-webkit-scrollbar-track { background: transparent; }
+.station-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+.station-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+.station-section { background: white; border-radius: 10px; padding: 0; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden; border-left: 3px solid #d1d5db; border: 1px solid #f0f0f0; }
+.station-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; cursor: pointer; user-select: none; transition: background 0.15s; }
+.station-header:hover { background: #f9fafb; }
+.station-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hdr-date { font-size: 14px; font-weight: 700; color: #1f2937; }
+.hdr-total { font-size: 13px; color: #6b7280; font-weight: 500; }
+.hdr-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.hdr-badge.hdr-improve { background: #f0fdf4; color: #16a34a; }
+.hdr-badge.hdr-worse { background: #fef2f2; color: #dc2626; }
+.hdr-badge.hdr-flat { background: #f3f4f6; color: #6b7280; }
+.hdr-arrow { display: inline-block; width: 18px; height: 18px; background: #f3f4f6; border-radius: 50%; position: relative; flex-shrink: 0; transition: transform 0.2s; }
+.hdr-arrow::after { content: ''; position: absolute; top: 6px; left: 5.5px; width: 6px; height: 6px; border-right: 1.5px solid #6b7280; border-bottom: 1.5px solid #6b7280; transform: rotate(45deg); transition: transform 0.2s; }
+.station-section.collapsed .hdr-arrow::after { transform: rotate(-45deg); top: 7px; }
+.station-content { max-height: 2000px; overflow: hidden; transition: max-height 0.35s ease, opacity 0.25s ease; opacity: 1; }
+.station-section.collapsed .station-content { max-height: 0; opacity: 0; transition: max-height 0.3s ease, opacity 0.15s ease; }
+.station-item { padding: 10px 18px; border-bottom: 1px solid #f3f4f6; line-height: 1.6; font-size: 13px; }
+.station-item .station-compare { display: inline-block; margin-top: 2px; padding-left: 2px; font-size: 12px; }
+.station-item:last-child { border-bottom: none; }
+.station-name { font-weight: 600; color: #1f2937; }
+.station-total { font-weight: 700; color: #dc2626; }
+.station-compare { font-size: 12px; }
+.station-compare.improve { color: #16a34a; font-weight: 600; }
+.station-compare.worse { color: #dc2626; font-weight: 600; }
+.station-compare.flat { color: #6b7280; }
+.station-compare.new { color: #7c3aed; font-weight: 600; }
+.station-contacts { display: inline-block; margin-left: 8px; font-size: 12px; color: #635bff; font-weight: 500; background: #f0eeff; padding: 1px 6px; border-radius: 4px; }
+.contacts-summary-box { padding: 22px !important; }
+.contacts-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; padding-bottom: 14px; }
+.contacts-header:hover { opacity: 0.8; }
+.contacts-arrow { position: relative; width: 24px; height: 24px; flex-shrink: 0; }
+.contacts-arrow::after { content: ''; position: absolute; width: 10px; height: 10px; border-right: 2.5px solid #6b7280; border-bottom: 2.5px solid #6b7280; transform: rotate(45deg); top: 4px; left: 6px; transition: transform 0.2s; }
+.contacts-summary-box.collapsed .contacts-arrow::after { transform: rotate(-45deg); top: 8px; }
+.contacts-body { max-height: 800px; opacity: 1; overflow: hidden; transition: max-height 0.3s ease, opacity 0.2s ease; }
+.contacts-summary-box.collapsed .contacts-body { max-height: 0; opacity: 0; }
+.contacts-list { display: flex; flex-direction: column; gap: 0; }
+.contacts-row { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; font-size: 13px; line-height: 1.6; }
+.contacts-row:last-child { border-bottom: none; }
+.contacts-site { font-weight: 600; color: #1f2937; }
+.contacts-num { font-weight: 700; color: #dc2626; }
+.contacts-ppl { color: #635bff; font-weight: 500; }
+.station-summary { padding: 14px 18px; background: #f9fafb; font-size: 13px; line-height: 1.7; color: #374151; position: relative; }
+.summary-copy-bar { text-align: right; margin-bottom: 6px; }
+.copy-btn { background: #635bff; color: #fff; border: none; border-radius: 4px; padding: 4px 12px; font-size: 12px; cursor: pointer; transition: background 0.2s; }
+.copy-btn:hover { background: #4b44d4; }
+.copy-btn.copied { background: #16a34a; }
+.review-section { margin-bottom: 10px; }
+.review-section:last-child { margin-bottom: 0; }
+.review-section strong { color: #1f2937; }
+.footer { text-align: center; margin-top: 20px; color: #9ca3af; font-size: 11px; }
+@media (max-width: 768px) { .summary-cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="site-bar"><a href="https://skr-ai.github.io/imperfect-order-report-june/"><div class="site-logo"></div><span class="site-name">玛瑙的小站</span></a></div>
+  <div class="header">
+    <h1>高校不完美订单改善趋势日报</h1>
+    <div class="subtitle">报告日期：2026-06-03 | 数据范围：6/1 | 窄口径</div>
+  </div>
+
+  <div class="summary-cards">
+    <div class="card">
+      <div class="label">最新日不完美订单</div>
+      <div class="value" style="color:#1f2937">332</div>
+      <div class="change down">较前日 0单 (0.0%)</div>
+    </div>
+    <div class="card">
+      <div class="label">较峰值下降</div>
+      <div class="value" style="color:#16a34a">0.0%</div>
+      <div class="change down">峰值332单(6/1) → 332单</div>
+    </div>
+    <div class="card">
+      <div class="label">近3日均值</div>
+      <div class="value" style="color:#7c3aed">332</div>
+      <div class="change down">较前3日均值(332)0.0%</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="kpi-row">
+      <div>
+        <h2>不完美订单总量</h2>
+        <div class="kpi-value">332 单</div>
+        <span class="kpi-delta down">→ 0 (0.0%) vs 前日</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><span class="legend-dot" style="background:#635bff;"></span>本期 6/1–6/1</div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="totalChart"></canvas>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="kpi-row">
+      <div>
+        <h2>分类指标趋势</h2>
+        <div class="kpi-value" style="font-size:18px;color:#374151;">提前/虚假 · T30超时 · 不满意 · 未妥投</div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><span class="legend-dot" style="background:#635bff;"></span>提前/虚假</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#cd3d63;"></span>T30超时</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f5a623;"></span>不满意</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#198a3f;"></span>未妥投</div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="categoryChart"></canvas>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>每日数据明细</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>总单</th>
+            <th>环比</th>
+            <th>T30超时</th>
+            <th>未妥投</th>
+            <th>提前/虚假</th>
+            <th>不满意</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section station-box">
+    <h2 style="margin:0 0 12px;font-size:16px;font-weight:700;color:#1f2937;">站点达成明细</h2>
+    <div class="station-scroll">
+  <div class="station-section" style="border-left:3px solid #d1d5db;">
+    <div class="station-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <div class="station-header-left">
+        <span class="hdr-date">6/1</span>
+        <span class="hdr-total">332单</span>
+        <span class="hdr-badge hdr-flat">首日</span>
+      </div>
+      <span class="hdr-arrow"></span>
+    </div>
+    <div class="station-content">
+      <div class="station-item">
+        <span class="station-name">厦门派得快-华南理工大学(国际校区)校外站</span>，<span class="station-total">63</span>单（提前/虚假2、T30超时44、不满意1、未妥投17） <span class="station-contacts">@简俊泽 @刘慧欣</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">麻豆人-番禺区大学城站</span>，<span class="station-total">50</span>单（提前/虚假24、不满意28、未妥投1） <span class="station-contacts">@阮畅 @张勇</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">厦门派得快-广州铁路职业技术学院(科教城校区)任意门站</span>，<span class="station-total">36</span>单（提前/虚假13、T30超时16、不满意3、未妥投4） <span class="station-contacts">@简俊泽 @简惠州</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">珠海智创-南方医科大学站</span>，<span class="station-total">28</span>单（提前/虚假7、T30超时13、不满意3、未妥投6） <span class="station-contacts">@梁铭智 @闫国晋</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">广州晟丽-广东省轻工业技师学院（增城校区）</span>，<span class="station-total">13</span>单（T30超时12、未妥投1）<br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">广州易送达-广东生态工程职业学院校内站</span>，<span class="station-total">10</span>单（提前/虚假1、T30超时9） <span class="station-contacts">@梁铭智 @邹浩</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">深圳优地-广州仲恺任意门站</span>，<span class="station-total">10</span>单（提前/虚假4、T30超时6） <span class="station-contacts">@刘帅</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">广州胜凯-水利水电校内校外站</span>，<span class="station-total">8</span>单（提前/虚假8、不满意1） <span class="station-contacts">@阿凯 @煜枝</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">迅享生活科技—华农站</span>，<span class="station-total">8</span>单（提前/虚假3、不满意6） <span class="station-contacts">@陈乙丙</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-item">
+        <span class="station-name">深圳优地-广州城市理工学院</span>，<span class="station-total">7</span>单（提前/虚假5、不满意3） <span class="station-contacts">@冯少锋 @陈志明</span><br>
+        <span class="station-compare flat">首日数据</span>
+      </div>
+      <div class="station-summary" id="summary-0601">
+        <div class="summary-copy-bar"><button class="copy-btn" onclick="copySummary('0601')">复制</button></div>
+        <div class="review-section"><strong>总结：</strong>5月1日产生严重不完美订单332单（首日数据）；其中提前/虚假配送115单（33.4%）、T30超时125单（36.3%）、不满意70单（20.3%）、未妥投34单（9.9%）。</div>
+        <div class="review-section"><strong>站点分析：</strong>从站点维度看，Top3站点合计149单占44.9%：<br><b>厦门派得快-华南理工大学(国际校区)校外站</b> 63单占19.0%（提前/虚假2单、T30超时44单）；<br><b>麻豆人-番禺区大学城站</b> 50单占15.1%（提前/虚假24单、不满意28单）；<br><b>厦门派得快-广州铁路职业技术学院(科教城校区)任意门站</b> 36单占10.8%（提前/虚假13单、T30超时16单）。</div>
+        <div class="review-section"><strong>改善动作：</strong><br>1、T30超时集中站点<b>厦门派得快-华南理工大学(国际校区)校外站</b>（44单），加强运力调度与时段排班，卡餐门店线下沟通确保准时出餐，对高频T30超时骑手由站长进行线下约谈。</div>
+      </div>
+    </div>
+  </div>
+
+
+    </div>
+  </div>
+
+  <div class="section contacts-summary-box">
+    <div class="contacts-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <h2 style="margin:0;font-size:16px;font-weight:700;color:#1f2937;">站点负责人汇总 <span style="font-size:13px;font-weight:400;color:#6b7280;">（6/1）</span></h2>
+      <span class="contacts-arrow"></span>
+    </div>
+    <div class="contacts-body">
+      <div class="contacts-row"><span class="contacts-site">厦门派得快-华南理工大学(国际校区)校外站</span>，<span class="contacts-num">63单</span> <span class="contacts-ppl">@简俊泽 @刘慧欣</span></div>
+      <div class="contacts-row"><span class="contacts-site">麻豆人-番禺区大学城站</span>，<span class="contacts-num">50单</span> <span class="contacts-ppl">@阮畅 @张勇</span></div>
+      <div class="contacts-row"><span class="contacts-site">厦门派得快-广州铁路职业技术学院(科教城校区)任意门站</span>，<span class="contacts-num">36单</span> <span class="contacts-ppl">@简俊泽 @简惠州</span></div>
+      <div class="contacts-row"><span class="contacts-site">珠海智创-南方医科大学站</span>，<span class="contacts-num">28单</span> <span class="contacts-ppl">@梁铭智 @闫国晋</span></div>
+      <div class="contacts-row"><span class="contacts-site">广州晟丽-广东省轻工业技师学院（增城校区）</span>，<span class="contacts-num">13单</span> <span class="contacts-ppl"></span></div>
+      <div class="contacts-row"><span class="contacts-site">广州易送达-广东生态工程职业学院校内站</span>，<span class="contacts-num">10单</span> <span class="contacts-ppl">@梁铭智 @邹浩</span></div>
+      <div class="contacts-row"><span class="contacts-site">深圳优地-广州仲恺任意门站</span>，<span class="contacts-num">10单</span> <span class="contacts-ppl">@刘帅</span></div>
+      <div class="contacts-row"><span class="contacts-site">广州胜凯-水利水电校内校外站</span>，<span class="contacts-num">8单</span> <span class="contacts-ppl">@阿凯 @煜枝</span></div>
+      <div class="contacts-row"><span class="contacts-site">迅享生活科技—华农站</span>，<span class="contacts-num">8单</span> <span class="contacts-ppl">@陈乙丙</span></div>
+      <div class="contacts-row"><span class="contacts-site">深圳优地-广州城市理工学院</span>，<span class="contacts-num">7单</span> <span class="contacts-ppl">@冯少锋 @陈志明</span></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    数据来源：<a href="https://skr-ai.github.io/imperfect-order-report-june/" target="_blank" style="color:#6b7280;">观星台 - 严重不完美订单报表</a> | 自动生成于 2026-05-28
+  </div>
+</div>
+
+<script>
+const data = [{"date": "6/1", "total": 332, "timeout": 125, "noDeliver": 34, "earlyFake": 115, "unsatisfied": 70}];
+const labels = data.map(d => d.date);
+
+// Stripe-style vertical hover-line plugin
+const stripeHoverLine = {
+  id: 'stripeHoverLine',
+  afterDatasetsDraw(chart) {
+    const tt = chart.tooltip;
+    if (!tt || !tt.opacity) return;
+    const active = tt.getActiveElements();
+    if (!active.length) return;
+    const x = active[0].element.x;
+    const {top, bottom} = chart.chartArea;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(99, 91, 255, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.moveTo(x, top); ctx.lineTo(x, bottom);
+    ctx.stroke();
+    ctx.restore();
+  }
+};
+
+function gradFill(ctx, area, rgb) {
+  if (!area) return `rgba(${rgb}, 0.05)`;
+  const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+  g.addColorStop(0, `rgba(${rgb}, 0.16)`);
+  g.addColorStop(1, `rgba(${rgb}, 0)`);
+  return g;
+}
+
+const STRIPE_TT = {
+  backgroundColor: '#ffffff',
+  titleColor: '#1a1f36', bodyColor: '#1a1f36',
+  borderColor: '#e3e8ee', borderWidth: 1,
+  padding: 12, cornerRadius: 8,
+  displayColors: true, boxPadding: 6,
+  titleFont: { weight: '600', size: 12 },
+  bodyFont: { size: 13, weight: '500' }
+};
+
+const STRIPE_X = {
+  grid: { display: false, drawBorder: false },
+  border: { color: '#e3e8ee' },
+  ticks: { font: { size: 11 }, color: '#8a8f99', padding: 6, maxTicksLimit: 8 }
+};
+
+const STRIPE_Y = {
+  beginAtZero: true,
+  grid: { color: '#f0f1f4', drawBorder: false, drawTicks: false },
+  border: { display: false },
+  ticks: { font: { size: 11 }, color: '#8a8f99', padding: 8, maxTicksLimit: 5 }
+};
+
+// =================== Total chart (Stripe style) ===================
+new Chart(document.getElementById('totalChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: '总单',
+      data: data.map(d => d.total),
+      borderColor: '#635bff',
+      borderWidth: 2,
+      backgroundColor: ctx => gradFill(ctx.chart.ctx, ctx.chart.chartArea, '99, 91, 255'),
+      fill: true,
+      tension: 0.3,
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: '#ffffff',
+      pointHoverBorderColor: '#635bff',
+      pointHoverBorderWidth: 2.5,
+      borderJoinStyle: 'round'
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        ...STRIPE_TT,
+        displayColors: false,
+        callbacks: { title: c => c[0].label, label: c => c.parsed.y + ' 单' }
+      }
+    },
+    scales: { x: STRIPE_X, y: STRIPE_Y }
+  },
+  plugins: [stripeHoverLine]
+});
+
+// =================== Category chart (Stripe style) ===================
+function catDataset(label, key, color, rgb, withFill) {
+  return {
+    label,
+    data: data.map(d => d[key]),
+    borderColor: color,
+    borderWidth: 2,
+    backgroundColor: withFill ? (ctx => gradFill(ctx.chart.ctx, ctx.chart.chartArea, rgb)) : 'transparent',
+    fill: withFill,
+    tension: 0.3,
+    pointRadius: 0,
+    pointHoverRadius: 5,
+    pointHoverBackgroundColor: '#ffffff',
+    pointHoverBorderColor: color,
+    pointHoverBorderWidth: 2.5,
+    borderJoinStyle: 'round'
+  };
+}
+
+new Chart(document.getElementById('categoryChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      catDataset('提前/虚假', 'earlyFake', '#635bff', '99, 91, 255', true),
+      catDataset('T30超时', 'timeout', '#cd3d63', '205, 61, 99', false),
+      catDataset('不满意', 'unsatisfied', '#f5a623', '245, 166, 35', false),
+      catDataset('未妥投', 'noDeliver', '#198a3f', '25, 138, 63', false),
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        ...STRIPE_TT,
+        callbacks: {
+          title: c => c[0].label,
+          label: c => `${c.dataset.label}: ${c.parsed.y} 单`,
+          labelColor: c => ({ borderColor: c.dataset.borderColor, backgroundColor: c.dataset.borderColor, borderWidth: 0, borderRadius: 2 })
+        }
+      }
+    },
+    scales: { x: STRIPE_X, y: STRIPE_Y }
+  },
+  plugins: [stripeHoverLine]
+});
+
+const tbody = document.getElementById('tableBody');
+for (let i = data.length - 1; i >= 0; i--) {
+  const d = data[i];
+  const prev = i > 0 ? data[i-1].total : null;
+  let changeHtml = '-';
+  if (prev !== null) {
+    const diff = d.total - prev;
+    const pct = ((diff / prev) * 100).toFixed(1);
+    const cls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+    const sign = diff > 0 ? '+' : '';
+    changeHtml = `<span class="trend-badge ${cls}">${sign}${diff} 单(${sign}${pct}%)</span>`;
+  }
+  tbody.innerHTML += `<tr>
+    <td>${d.date}</td>
+    <td><strong>${d.total}</strong></td>
+    <td>${changeHtml}</td>
+    <td>${d.timeout}</td>
+    <td>${d.noDeliver}</td>
+    <td>${d.earlyFake}</td>
+    <td>${d.unsatisfied}</td>
+  </tr>`;
+};
+
+// Collapsible station sections (first=newest expanded, rest collapsed)
+document.querySelectorAll('.station-section').forEach((sec, i) => {
+  if (i > 0) sec.classList.add('collapsed');
+});
+
+// Copy summary as rich text (HTML) for pasting into DingTalk
+function copySummary(dateKey) {
+  const container = document.getElementById('summary-' + dateKey);
+  if (!container) return;
+  // Clone and remove the copy button from the clone
+  const clone = container.cloneNode(true);
+  const bar = clone.querySelector('.summary-copy-bar');
+  if (bar) bar.remove();
+  const htmlContent = clone.innerHTML;
+  const textContent = clone.innerText || clone.textContent;
+  // Use Clipboard API with HTML mime type
+  if (navigator.clipboard && navigator.clipboard.write) {
+    const blob = new Blob([htmlContent], {type: 'text/html'});
+    const textBlob = new Blob([textContent], {type: 'text/plain'});
+    navigator.clipboard.write([new ClipboardItem({'text/html': blob, 'text/plain': textBlob})])
+      .then(() => showCopied(dateKey))
+      .catch(() => fallbackCopy(container, dateKey));
+  } else {
+    fallbackCopy(container, dateKey);
+  }
+}
+function fallbackCopy(container, dateKey) {
+  // Fallback: select and execCommand
+  const range = document.createRange();
+  const bar = container.querySelector('.summary-copy-bar');
+  if (bar) bar.style.display = 'none';
+  range.selectNodeContents(container);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.execCommand('copy');
+  sel.removeAllRanges();
+  if (bar) bar.style.display = '';
+  showCopied(dateKey);
+}
+function showCopied(dateKey) {
+  const container = document.getElementById('summary-' + dateKey);
+  const btn = container.querySelector('.copy-btn');
+  if (btn) {
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+  }
+}
+</script>
+</body>
+</html>
