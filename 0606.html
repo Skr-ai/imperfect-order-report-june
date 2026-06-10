@@ -449,6 +449,11 @@ tbody tr:hover td{background:rgba(0,122,255,.04) !important}
       <span class="combo-arrow" id="ocSiteComboArrow">&#9660;</span>
       <div class="combo-list" id="ocSiteComboList"></div>
     </div>
+    <div class="combo-wrap" id="ocAgentComboWrap" style="position:relative">
+      <input id="ocAgent" type="text" placeholder="搜索/选择代理商..." autocomplete="off" style="width:180px;padding:8px 28px 8px 14px;border:1.5px solid #e8e8ed;border-radius:10px;font-size:13px;background:#fff;outline:none">
+      <span class="combo-arrow" id="ocAgentComboArrow">&#9660;</span>
+      <div class="combo-list" id="ocAgentComboList"></div>
+    </div>
     <select id="ocPeriod" style="padding:8px 14px;border:1.5px solid #e8e8ed;border-radius:10px;font-size:13px;background:#fff;width:120px" onchange="ocRender()"><option value="">全部时段</option></select>
     <select id="ocVerdict" style="padding:8px 14px;border:1.5px solid #e8e8ed;border-radius:10px;font-size:13px;background:#fff;width:140px" onchange="ocRender()"><option value="">全部判定类型</option><option value="T30超时">T30超时</option><option value="未妥投">未妥投</option><option value="提前/虚假">提前/虚假</option><option value="不满意">不满意</option><option value="不满意-投诉">不满意·投诉</option><option value="不满意-索赔">不满意·索赔</option></select>
     <button onclick="ocReset()" style="padding:8px 16px;background:#f5f5f7;color:#1d1d1f;border:1px solid #e8e8ed;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">重置</button>
@@ -1178,6 +1183,7 @@ const DATES=D.dates||[];
         site: site,
         contact: sc.contact||'',
         manager: sc.manager||'',
+        agent: o['代理商名称']||'',
         merchant: o['商户名称']||'-',
         period: o['新时段']||'-',
         predT: predTNum,
@@ -1252,15 +1258,66 @@ const DATES=D.dates||[];
     if(ocSiteWrap&&!ocSiteWrap.contains(e.target)){ocSiteInput.value=ocSelectedSite;ocSiteCloseCombo();}
   });
 
+  // Agent combo (mirror Site combo)
+  const agents=[...new Set(allOrders.map(o=>o.agent).filter(v=>v&&v!=='-'))].sort();
+  const ocAgentWrap=document.getElementById('ocAgentComboWrap');
+  const ocAgentInput=document.getElementById('ocAgent');
+  const ocAgentList=document.getElementById('ocAgentComboList');
+  const ocAgentArrow=document.getElementById('ocAgentComboArrow');
+  let ocSelectedAgent='';
+  function ocAgentOpenCombo(){if(ocAgentWrap)ocAgentWrap.classList.add('open');}
+  function ocAgentCloseCombo(){if(ocAgentWrap)ocAgentWrap.classList.remove('open');}
+  function ocAgentIsOpen(){return ocAgentWrap&&ocAgentWrap.classList.contains('open');}
+  function ocAgentRenderItems(filter){
+    if(!ocAgentList)return;
+    ocAgentList.innerHTML='';
+    const kw=(filter||'').toLowerCase();
+    ocMkAgentItem('','全部代理商',kw);
+    agents.forEach(t=>ocMkAgentItem(t,t,kw));
+  }
+  function ocMkAgentItem(val,label,kw){
+    if(kw&&val&&!val.toLowerCase().includes(kw))return;
+    const div=document.createElement('div');
+    div.className='combo-item'+(val===ocSelectedAgent?' active':'');
+    div.textContent=label;
+    div.dataset.val=val;
+    div.addEventListener('mousedown',function(e){
+      e.preventDefault();
+      ocSelectedAgent=this.dataset.val;
+      ocAgentInput.value=ocSelectedAgent;
+      ocAgentCloseCombo();
+      ocRender();
+    });
+    ocAgentList.appendChild(div);
+  }
+  if(ocAgentInput){
+    ocAgentInput.addEventListener('click',function(){this.value='';ocAgentRenderItems('');ocAgentOpenCombo();});
+    ocAgentInput.addEventListener('focus',function(){this.value='';ocAgentRenderItems('');ocAgentOpenCombo();});
+    ocAgentInput.addEventListener('input',function(){ocAgentRenderItems(this.value);if(!ocAgentIsOpen())ocAgentOpenCombo();});
+    ocAgentInput.addEventListener('blur',function(){setTimeout(function(){ocAgentInput.value=ocSelectedAgent;ocAgentCloseCombo();},200);});
+  }
+  if(ocAgentArrow){
+    ocAgentArrow.addEventListener('mousedown',function(e){
+      e.preventDefault();
+      if(ocAgentIsOpen()){ocAgentCloseCombo();ocAgentInput.value=ocSelectedAgent;}
+      else{ocAgentInput.value='';ocAgentInput.focus();ocAgentRenderItems('');ocAgentOpenCombo();}
+    });
+  }
+  document.addEventListener('click',function(e){
+    if(ocAgentWrap&&!ocAgentWrap.contains(e.target)){ocAgentInput.value=ocSelectedAgent;ocAgentCloseCombo();}
+  });
+
   let sortKey='', sortDir=1, page=1, pageSize=50;
 
   function getFiltered(){
     const kw=(document.getElementById('ocSearch')?.value||'').trim().toLowerCase();
     const fSite=ocSelectedSite||'';
+    const fAgent=ocSelectedAgent||'';
     const fPeriod=document.getElementById('ocPeriod')?.value||'';
     const fVerdict=document.getElementById('ocVerdict')?.value||'';
     return allOrders.filter(o=>{
       if(fSite && o.site!==fSite)return false;
+      if(fAgent && o.agent!==fAgent)return false;
       if(fPeriod && o.period!==fPeriod)return false;
       if(fVerdict){
         if(fVerdict==='不满意-投诉'){if(!(o.cats.includes('不满意')&&o.unsatNote==='投诉'))return false;}
@@ -1268,7 +1325,7 @@ const DATES=D.dates||[];
         else{if(!o.cats.includes(fVerdict))return false;}
       }
       if(kw){
-        const blob=(o.id+' '+o.date+' '+o.status+' '+o.rider+' '+o.site+' '+o.contact+' '+o.manager+' '+o.merchant+' '+o.period+' '+o.verdict).toLowerCase();
+        const blob=(o.id+' '+o.date+' '+o.status+' '+o.rider+' '+o.site+' '+o.contact+' '+o.manager+' '+(o.agent||'')+' '+o.merchant+' '+o.period+' '+o.verdict).toLowerCase();
         if(!blob.includes(kw))return false;
       }
       return true;
@@ -1354,8 +1411,8 @@ const DATES=D.dates||[];
 
   window.ocGoPage=function(p){page=p;ocRender();};
   window.ocReset=function(){
-    ['ocSearch','ocSite','ocPeriod','ocVerdict'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    ocSelectedSite='';sortKey='';sortDir=1;page=1;ocRender();
+    ['ocSearch','ocSite','ocAgent','ocPeriod','ocVerdict'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ocSelectedSite='';ocSelectedAgent='';sortKey='';sortDir=1;page=1;ocRender();
   };
 
   window.ocExport=async function(){
