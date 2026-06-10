@@ -1768,11 +1768,12 @@ async function _doExport(){
       try{cloudData=JSON.parse(base64ToUtf8(meta.content));}catch(e){cloudData={reviews:{}};}
       if(!cloudData.reviews)cloudData.reviews={};
       const dateData=cloudData.reviews[REPORT_DATE]||{};
-      el.querySelectorAll('textarea').forEach(ta=>{
-        const st=ta.getAttribute('data-station');
-        const field=ta.classList.contains('review-reason')?'reason':'improvement';
-        const v=(dateData[st]&&dateData[st][field])||'';
-        if(document.activeElement!==ta && ta.value!==v) ta.value=v;
+      el.querySelectorAll('select.review-issue').forEach(sel=>{
+        const st=sel.getAttribute('data-station');
+        const slot=parseInt(sel.getAttribute('data-slot'),10)||0;
+        const issues=(dateData[st]&&dateData[st].issues)||[];
+        const v=issues[slot]||'';
+        if(document.activeElement!==sel && sel.value!==v){sel.value=v;styleSelect(sel);}
       });
       setSync('ok','已同步 · '+new Date().toLocaleTimeString('zh-CN',{hour12:false}));
     }catch(e){
@@ -1800,14 +1801,13 @@ async function _doExport(){
       if(!cloudData.reviews)cloudData.reviews={};
       const cur={};
       el.querySelectorAll('.review-station-card').forEach(card=>{
-        const reasonEl=card.querySelector('.review-reason');
-        const actionEl=card.querySelector('.review-action');
-        if(!reasonEl)return;
-        const st=reasonEl.getAttribute('data-station');
-        const reason=reasonEl.value||'';
-        const action=actionEl?actionEl.value:'';
-        if(reason.trim()||action.trim()){
-          cur[st]={reason:reason,improvement:action,updated:new Date().toISOString()};
+        const sels=card.querySelectorAll('select.review-issue');
+        if(!sels.length)return;
+        const st=sels[0].getAttribute('data-station');
+        const issues=[];
+        sels.forEach(s=>{if(s.value)issues.push(s.value);});
+        if(issues.length){
+          cur[st]={issues:issues,updated:new Date().toISOString()};
         }
       });
       if(Object.keys(cur).length){cloudData.reviews[REPORT_DATE]=cur;}
@@ -1842,6 +1842,36 @@ async function _doExport(){
     saveTimer=setTimeout(saveCloud,1500);
   }
 
+  // ===== 11 类问题选项 + 彩色徽章 =====
+  const ISSUE_TYPES=[
+    {label:'运力问题',bg:'#cfe2ff',fg:'#0b3a82'},
+    {label:'赔付问题',bg:'#fff3bf',fg:'#7a5b00'},
+    {label:'商户问题',bg:'#ffd9d9',fg:'#9b1c1c'},
+    {label:'骑手操作问题',bg:'#cdebd0',fg:'#1f6f33'},
+    {label:'天气问题',bg:'#fbd0e0',fg:'#9c1c5e'},
+    {label:'校方关系',bg:'#f8c7d3',fg:'#a01540'},
+    {label:'偷餐问题',bg:'#cdd5fc',fg:'#2a3aa0'},
+    {label:'取餐问题',bg:'#bfe9c4',fg:'#196e2a'},
+    {label:'盯盘问题',bg:'#fde8a3',fg:'#7a5400'},
+    {label:'关站处理',bg:'#b9e3bd',fg:'#196b27'},
+    {label:'资金问题',bg:'#ffd6a8',fg:'#9c4400'}
+  ];
+  const ISSUE_MAP={};ISSUE_TYPES.forEach(it=>ISSUE_MAP[it.label]=it);
+  function styleSelect(sel){
+    const v=sel.value;
+    if(v && ISSUE_MAP[v]){
+      const c=ISSUE_MAP[v];
+      sel.style.background=c.bg;sel.style.color=c.fg;sel.style.fontWeight='700';sel.style.borderColor=c.bg;
+    }else{
+      sel.style.background='#fafbfc';sel.style.color='#1d1d1f';sel.style.fontWeight='500';sel.style.borderColor='#e8e8ed';
+    }
+  }
+  function buildOptions(){
+    let opts='<option value="">— 选择问题 —</option>';
+    ISSUE_TYPES.forEach(it=>{opts+=`<option value="${it.label}">${it.label}</option>`;});
+    return opts;
+  }
+
   // Color for left bar based on rank
   const barColors=['#ff3b30','#ff6b6b','#ff9500','#ffb347','#007aff','#5ac8fa','#34c759','#86868b'];
   let html='<div style="display:flex;flex-direction:column;gap:14px">';
@@ -1853,7 +1883,7 @@ async function _doExport(){
     html+=`<div style="width:5px;flex-shrink:0;background:${barColor}"></div>`;
     html+=`<div style="flex:1;padding:16px 20px">`;
     // Header row
-    html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">`;
+    html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">`;
     html+=`<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:${barColor};color:#fff;font-size:11px;font-weight:700;flex-shrink:0">${idx+1}</span>`;
     html+=`<span style="font-size:14px;font-weight:700;color:#1d1d1f;flex:1">${name}${contactsBadge(name)}</span>`;
     html+=`<div style="display:flex;gap:6px;flex-wrap:wrap">`;
@@ -1863,20 +1893,21 @@ async function _doExport(){
     if(ef)html+=`<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#f3e5f5;color:#7b1fa2">提前/虚假${ef}</span>`;
     if(unsat)html+=`<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#e3f2fd;color:#1565c0">不满意${unsat}</span>`;
     html+=`</div></div>`;
-    // Input fields with icons
-    html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">`;
-    html+=`<div><label style="font-size:11px;font-weight:700;color:#86868b;display:flex;align-items:center;gap:4px;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px"><span style="color:#ff9500">⚠</span> 问题原因</label>`;
-    html+=`<textarea class="review-reason" data-station="${name}" rows="2" placeholder="今日主要问题原因..." style="width:100%;padding:10px 12px;border:1.5px solid #f0f0f2;border-radius:8px;font-size:13px;resize:vertical;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit;line-height:1.5;background:#fafbfc" onfocus="this.style.borderColor='#667eea';this.style.boxShadow='0 0 0 3px rgba(102,126,234,.1)'" onblur="this.style.borderColor='#f0f0f2';this.style.boxShadow=''"></textarea></div>`;
-    html+=`<div><label style="font-size:11px;font-weight:700;color:#86868b;display:flex;align-items:center;gap:4px;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px"><span style="color:#34c759">✓</span> 改善措施</label>`;
-    html+=`<textarea class="review-action" data-station="${name}" rows="2" placeholder="针对性改善方案..." style="width:100%;padding:10px 12px;border:1.5px solid #f0f0f2;border-radius:8px;font-size:13px;resize:vertical;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit;line-height:1.5;background:#fafbfc" onfocus="this.style.borderColor='#34c759';this.style.boxShadow='0 0 0 3px rgba(52,199,89,.1)'" onblur="this.style.borderColor='#f0f0f2';this.style.boxShadow=''"></textarea></div>`;
+    // 主要的3个问题（下拉选择）
+    html+=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">`;
+    html+=`<label style="font-size:11px;font-weight:700;color:#86868b;display:inline-flex;align-items:center;gap:4px;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0"><span style="color:#ff9500">⚠</span> 主要的3个问题</label>`;
+    for(let i=0;i<3;i++){
+      html+=`<select class="review-issue" data-station="${name}" data-slot="${i}" style="flex:1;min-width:140px;padding:8px 12px;border:1.5px solid #e8e8ed;border-radius:20px;font-size:13px;font-weight:500;outline:none;cursor:pointer;background:#fafbfc;transition:all .2s;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path fill=%22%23666%22 d=%22M0 0l5 6 5-6z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:28px">${buildOptions()}</select>`;
+    }
     html+=`</div></div></div>`;
   });
   html+='</div>';
   el.innerHTML=html;
 
-  // Bind input events for auto-save
-  el.querySelectorAll('textarea').forEach(ta=>{
-    ta.addEventListener('input',scheduleSave);
+  // Apply initial styles + bind change events
+  el.querySelectorAll('select.review-issue').forEach(sel=>{
+    styleSelect(sel);
+    sel.addEventListener('change',function(){styleSelect(sel);scheduleSave();});
   });
 
   // Initial load + polling
@@ -1893,17 +1924,16 @@ async function _doExport(){
     let text=`【站点复盘】${D.dates&&D.dates[0]?D.dates[0]:''}\n\n`;
     sorted.forEach(([name, data])=>{
       const t=data.total||0,timeout=data.timeout||0,nd=data.no_deliver||0,ef=data.early_fake||0,unsat=data.unsat||0;
-      const reasonEl=el.querySelector(`.review-reason[data-station="${name}"]`);
-      const actionEl=el.querySelector(`.review-action[data-station="${name}"]`);
-      const reason=(reasonEl&&reasonEl.value.trim())||'（未填写）';
-      const action=(actionEl&&actionEl.value.trim())||'（未填写）';
+      const sels=el.querySelectorAll(`select.review-issue[data-station="${name.replace(/"/g,'\\"')}"]`);
+      const issues=[];
+      sels.forEach(s=>{if(s.value)issues.push(s.value);});
       text+=`${name}${contactsText(name)}\n`;
       text+=`达成：总${t}单`;
       if(timeout)text+=`，T30超时${timeout}`;
       if(nd)text+=`，未妥投${nd}`;
       if(ef)text+=`，提前/虚假${ef}`;
       if(unsat)text+=`，不满意${unsat}`;
-      text+=`\n原因：${reason}\n改善措施：${action}\n\n`;
+      text+=`\n主要问题：${issues.length?issues.join('、'):'（未填写）'}\n\n`;
     });
     result.style.display='block';
     result.textContent=text;
@@ -1920,7 +1950,7 @@ async function _doExport(){
   // Clear button
   document.getElementById('btnClearReview').addEventListener('click',function(){
     if(!confirm('确定清空所有填写内容？此操作会同步删除云端数据'))return;
-    el.querySelectorAll('textarea').forEach(ta=>ta.value='');
+    el.querySelectorAll('select.review-issue').forEach(sel=>{sel.value='';styleSelect(sel);});
     document.getElementById('reviewExportResult').style.display='none';
     scheduleSave();
   });
