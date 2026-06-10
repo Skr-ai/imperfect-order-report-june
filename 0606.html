@@ -510,7 +510,7 @@ tbody tr:hover td{background:rgba(0,122,255,.04) !important}
       <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:rgba(255,255,255,.08);border-radius:50%"></div>
       <div style="position:absolute;bottom:-30px;left:40%;width:140px;height:140px;background:rgba(255,255,255,.05);border-radius:50%"></div>
       <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:6px">站点复盘</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.8)">各站点今日不完美订单达成情况 · 选择主要的3个问题</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.8)">各站点今日不完美订单达成情况 · 选择问题 + 填写解决方式</div>
       <div id="cloudSyncStatus" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;font-size:12px;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
         <span id="cloudSyncDot" style="width:8px;height:8px;border-radius:50%;background:#34c759;box-shadow:0 0 6px rgba(52,199,89,.7);animation:pulse-dot 2s infinite"></span>
         <span id="cloudSyncText">云端同步 · 多人协作 · 实时共享</span>
@@ -1775,6 +1775,11 @@ async function _doExport(){
         const v=issues[slot]||'';
         if(document.activeElement!==sel && sel.value!==v){sel.value=v;styleSelect(sel);}
       });
+      el.querySelectorAll('textarea.review-solution').forEach(ta=>{
+        const st=ta.getAttribute('data-station');
+        const v=(dateData[st]&&dateData[st].solution)||'';
+        if(document.activeElement!==ta && ta.value!==v) ta.value=v;
+      });
       setSync('ok','已同步 · '+new Date().toLocaleTimeString('zh-CN',{hour12:false}));
     }catch(e){
       setSync('err','同步失败：'+e.message);
@@ -1806,8 +1811,10 @@ async function _doExport(){
         const st=sels[0].getAttribute('data-station');
         const issues=[];
         sels.forEach(s=>{if(s.value)issues.push(s.value);});
-        if(issues.length){
-          cur[st]={issues:issues,updated:new Date().toISOString()};
+        const solEl=card.querySelector('textarea.review-solution');
+        const solution=(solEl&&solEl.value)||'';
+        if(issues.length||solution.trim()){
+          cur[st]={issues:issues,solution:solution,updated:new Date().toISOString()};
         }
       });
       if(Object.keys(cur).length){cloudData.reviews[REPORT_DATE]=cur;}
@@ -1894,12 +1901,18 @@ async function _doExport(){
     if(unsat)html+=`<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#e3f2fd;color:#1565c0">不满意${unsat}</span>`;
     html+=`</div></div>`;
     // 主要的3个问题（下拉选择）
-    html+=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">`;
+    html+=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">`;
     html+=`<label style="font-size:11px;font-weight:700;color:#86868b;display:inline-flex;align-items:center;gap:4px;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0"><span style="color:#ff9500">⚠</span> 主要的3个问题</label>`;
     for(let i=0;i<3;i++){
       html+=`<select class="review-issue" data-station="${name}" data-slot="${i}" style="flex:1;min-width:140px;padding:8px 12px;border:1.5px solid #e8e8ed;border-radius:20px;font-size:13px;font-weight:500;outline:none;cursor:pointer;background:#fafbfc;transition:all .2s;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path fill=%22%23666%22 d=%22M0 0l5 6 5-6z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:28px">${buildOptions()}</select>`;
     }
-    html+=`</div></div></div>`;
+    html+=`</div>`;
+    // 解决方式（自由填写）
+    html+=`<div style="display:flex;align-items:flex-start;gap:10px">`;
+    html+=`<label style="font-size:11px;font-weight:700;color:#86868b;display:inline-flex;align-items:center;gap:4px;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0;padding-top:10px"><span style="color:#34c759">✓</span> 解决方式</label>`;
+    html+=`<textarea class="review-solution" data-station="${name}" rows="2" placeholder="针对上述问题的解决方式..." style="flex:1;padding:10px 12px;border:1.5px solid #f0f0f2;border-radius:8px;font-size:13px;resize:vertical;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit;line-height:1.5;background:#fafbfc" onfocus="this.style.borderColor='#34c759';this.style.boxShadow='0 0 0 3px rgba(52,199,89,.1)'" onblur="this.style.borderColor='#f0f0f2';this.style.boxShadow=''"></textarea>`;
+    html+=`</div>`;
+    html+=`</div></div>`;
   });
   html+='</div>';
   el.innerHTML=html;
@@ -1908,6 +1921,9 @@ async function _doExport(){
   el.querySelectorAll('select.review-issue').forEach(sel=>{
     styleSelect(sel);
     sel.addEventListener('change',function(){styleSelect(sel);scheduleSave();});
+  });
+  el.querySelectorAll('textarea.review-solution').forEach(ta=>{
+    ta.addEventListener('input',scheduleSave);
   });
 
   // Initial load + polling
@@ -1927,13 +1943,15 @@ async function _doExport(){
       const sels=el.querySelectorAll(`select.review-issue[data-station="${name.replace(/"/g,'\\"')}"]`);
       const issues=[];
       sels.forEach(s=>{if(s.value)issues.push(s.value);});
+      const solEl=el.querySelector(`textarea.review-solution[data-station="${name.replace(/"/g,'\\"')}"]`);
+      const solution=(solEl&&solEl.value.trim())||'';
       text+=`${name}${contactsText(name)}\n`;
       text+=`达成：总${t}单`;
       if(timeout)text+=`，T30超时${timeout}`;
       if(nd)text+=`，未妥投${nd}`;
       if(ef)text+=`，提前/虚假${ef}`;
       if(unsat)text+=`，不满意${unsat}`;
-      text+=`\n主要问题：${issues.length?issues.join('、'):'（未填写）'}\n\n`;
+      text+=`\n主要问题：${issues.length?issues.join('、'):'（未填写）'}\n解决方式：${solution||'（未填写）'}\n\n`;
     });
     result.style.display='block';
     result.textContent=text;
@@ -1951,6 +1969,7 @@ async function _doExport(){
   document.getElementById('btnClearReview').addEventListener('click',function(){
     if(!confirm('确定清空所有填写内容？此操作会同步删除云端数据'))return;
     el.querySelectorAll('select.review-issue').forEach(sel=>{sel.value='';styleSelect(sel);});
+    el.querySelectorAll('textarea.review-solution').forEach(ta=>ta.value='');
     document.getElementById('reviewExportResult').style.display='none';
     scheduleSave();
   });
