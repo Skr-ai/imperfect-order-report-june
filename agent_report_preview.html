@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高校不完美订单改善趋势日报 · 代理商维度</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f8f9fa; padding:0 24px 24px; color:#1a202c; }
+.container { max-width:960px; margin:0 auto; }
+.site-bar { display:flex; align-items:center; padding:18px 0; margin-bottom:20px; }
+.site-bar .site-logo { width:28px; height:28px; border-radius:50%; background:radial-gradient(circle at 35% 35%,#d8b4fe,#9333ea 40%,#581c87 65%,#2e0a4d 100%); box-shadow:0 2px 8px rgba(147,51,234,0.3); margin-right:8px; }
+.site-bar .site-name { font-size:14px; font-weight:600; color:#374151; }
+.header { text-align:center; margin-bottom:24px; }
+.header h1 { font-size:22px; font-weight:700; margin-bottom:4px; }
+.header .subtitle { color:#6b7280; font-size:13px; }
+.tag { display:inline-block; padding:2px 8px; background:#eef2ff; color:#4338ca; border-radius:4px; font-size:11px; margin-left:6px; vertical-align:middle; }
+.section { background:#fff; border-radius:12px; padding:22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,0.05); border:1px solid #ededed; }
+.combo-wrap { position:relative; max-width:440px; margin:0 auto 18px; }
+.combo-input { width:100%; padding:11px 38px 11px 14px; font-size:14px; border:1px solid #d1d5db; border-radius:10px; background:#fff; outline:none; }
+.combo-input:focus { border-color:#635bff; box-shadow:0 0 0 3px rgba(99,91,255,0.12); }
+.combo-arrow { position:absolute; right:12px; top:50%; transform:translateY(-50%); width:10px; height:10px; border-right:2px solid #6b7280; border-bottom:2px solid #6b7280; transform:translateY(-70%) rotate(45deg); pointer-events:none; }
+.combo-list { position:absolute; top:100%; left:0; right:0; max-height:320px; overflow-y:auto; background:#fff; border:1px solid #e5e7eb; border-radius:10px; margin-top:4px; box-shadow:0 8px 24px rgba(0,0,0,0.08); display:none; z-index:50; }
+.combo-list.open { display:block; }
+.combo-item { padding:9px 14px; cursor:pointer; font-size:13px; display:flex; justify-content:space-between; align-items:center; }
+.combo-item:hover, .combo-item.active { background:#f3f4f6; }
+.combo-item .num { color:#6b7280; font-size:12px; font-variant-numeric:tabular-nums; }
+.summary-cards { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:18px; }
+.card { background:#fff; border-radius:10px; padding:14px; border:1px solid #ededed; }
+.card .label { font-size:12px; color:#6b7280; margin-bottom:4px; }
+.card .value { font-size:24px; font-weight:700; }
+.card .change { font-size:11px; margin-top:2px; color:#6b7280; }
+.card.bad .value { color:#dc2626; }
+.card.good .value { color:#16a34a; }
+.chart-wrap { position:relative; height:280px; }
+.review-list { list-style:none; padding:0; }
+.review-list li { padding:9px 12px; margin-bottom:6px; border-radius:8px; font-size:13px; line-height:1.6; border-left:3px solid #d1d5db; background:#f9fafb; }
+.review-list li.bad { border-left-color:#dc2626; background:#fef2f2; color:#7f1d1d; }
+.review-list li.warn { border-left-color:#f59e0b; background:#fffbeb; color:#78350f; }
+.review-list li.good { border-left-color:#16a34a; background:#f0fdf4; color:#14532d; }
+.review-list li.mild { border-left-color:#f97316; background:#fff7ed; color:#7c2d12; }
+.review-list li.info { border-left-color:#3b82f6; background:#eff6ff; color:#1e3a8a; }
+.review-list li.flat { border-left-color:#9ca3af; background:#f3f4f6; color:#374151; }
+.copy-btn { float:right; padding:4px 10px; font-size:12px; background:#635bff; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+.copy-btn:hover { background:#5048e5; }
+.copy-btn.copied { background:#16a34a; }
+.section-title { font-size:15px; font-weight:700; margin-bottom:12px; color:#1f2937; }
+.section-title .small { font-size:12px; color:#6b7280; font-weight:400; margin-left:6px; }
+.station-table { width:100%; border-collapse:collapse; font-size:13px; }
+.station-table th, .station-table td { padding:9px 10px; text-align:left; border-bottom:1px solid #f0f0f0; }
+.station-table th { background:#fafafa; font-weight:600; color:#4b5563; font-size:12px; }
+.station-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.diff-up { color:#dc2626; font-weight:600; }
+.diff-down { color:#16a34a; font-weight:600; }
+.diff-flat { color:#9ca3af; }
+.contacts-pill { display:inline-block; background:#eef2ff; color:#4338ca; padding:1px 7px; border-radius:10px; font-size:11px; margin-right:4px; }
+.empty { color:#9ca3af; font-size:13px; text-align:center; padding:20px; }
+@media (max-width:768px) {
+  .summary-cards { grid-template-columns:repeat(2,1fr); }
+  .station-table th:nth-child(7), .station-table td:nth-child(7) { display:none; }
+}
+</style>
+</head>
+<body>
+<div class="site-bar"><a href="https://skr-ai.github.io/imperfect-order-report-june/" style="text-decoration:none;display:flex;align-items:center;"><span class="site-logo"></span><span class="site-name">玛瑙的小站</span></a></div>
+<div class="container">
+  <div class="header">
+    <h1>高校不完美订单改善趋势日报 · 代理商维度<span class="tag">PREVIEW · 6/11</span></h1>
+    <div class="subtitle">2026年6月1日 - 2026年6月11日 · 广州 · 共 32 家代理商</div>
+  </div>
+
+  <div class="combo-wrap" id="agentCombo">
+    <input type="text" class="combo-input" id="agentInput" placeholder="搜索/选择代理商..." autocomplete="off">
+    <span class="combo-arrow"></span>
+    <div class="combo-list" id="agentList"></div>
+  </div>
+
+  <div class="summary-cards" id="summaryCards"></div>
+
+  <div class="section">
+    <div class="section-title">11 天总单量趋势 <span class="small">（窄口径严重不完美）</span></div>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📋 自动复盘 <span class="small">（基于环比与品类分布）</span><button class="copy-btn" id="copyReview">复制为文本</button></div>
+    <ul class="review-list" id="reviewList"></ul>
+  </div>
+
+  <div class="section">
+    <div class="section-title">6/11 站点明细 <span class="small">（按当日单量降序）</span></div>
+    <table class="station-table">
+      <thead><tr>
+        <th>站点</th><th class="num">单量</th><th class="num">环比</th>
+        <th class="num">T30</th><th class="num">未妥</th><th class="num">提虚</th><th class="num">不满</th>
+        <th>对接人</th>
+      </tr></thead>
+      <tbody id="stationBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section" style="text-align:center;color:#9ca3af;font-size:12px;">
+    数据时间 2026-06-13 · 11 天数据 6/1-6/11 · 24+ 家代理商
+  </div>
+</div>
+
+<script>
+const LABELS = ["6/1", "6/2", "6/3", "6/4", "6/5", "6/6", "6/7", "6/8", "6/9", "6/10", "6/11"];
+const AGENTS = {"厦门派得快配送服务有限公司": {"series": [78, 26, 41, 40, 24, 142, 40, 43, 45, 27, 43], "cat_series": {"timeout": [28, 8, 15, 20, 4, 88, 11, 17, 23, 8, 25], "no_deliver": [4, 1, 2, 5, 1, 12, 1, 1, 2, 1, 4], "early_fake": [42, 13, 19, 14, 14, 39, 24, 21, 16, 14, 14], "unsat": [5, 4, 5, 2, 10, 7, 4, 6, 4, 5, 1]}, "latest": {"total": 43, "timeout": 25, "no_deliver": 4, "early_fake": 14, "unsat": 1, "riders": 6}, "prev_total": 27, "sites": [{"name": "厦门派得快-广州铁路职业技术学院(科教城校区)任意门站（高校配送）", "total": 42, "timeout": 25, "no_deliver": 4, "early_fake": 14, "unsat": 0, "prev_total": 21, "diff": 21, "contact": "简俊泽", "manager": "简惠州"}, {"name": "厦门派得快-广东财经大学(广州校区)校外站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 1, "prev_total": 0, "diff": 1, "contact": "简俊泽", "manager": "谢胜辉"}], "bullets": [{"level": "bad", "text": "6/11 总单量 43 单，环比 +16 单 (↑59%)，恶化明显"}, {"level": "info", "text": "主要品类：T30 超时 25 单（占 58%），较前日 +17 单"}, {"level": "bad", "text": "⚠ 厦门派得快-广州铁路职业技术学院(科教城校区)任意门站（高校配送） 当日 42 单，环比 +21 单（21→42），恶化"}]}, "广州晟丽科技有限公司": {"series": [26, 18, 36, 23, 32, 37, 51, 35, 59, 31, 30], "cat_series": {"timeout": [2, 1, 2, 1, 0, 7, 22, 4, 28, 2, 6], "no_deliver": [3, 0, 4, 1, 2, 1, 2, 3, 11, 6, 3], "early_fake": [15, 14, 21, 10, 16, 24, 25, 21, 14, 19, 13], "unsat": [9, 5, 12, 12, 17, 6, 6, 8, 6, 6, 9]}, "latest": {"total": 30, "timeout": 6, "no_deliver": 3, "early_fake": 13, "unsat": 9, "riders": 17}, "prev_total": 31, "sites": [{"name": "广州晟丽-广东外语外贸北校区站（高校配送）", "total": 7, "timeout": 0, "no_deliver": 0, "early_fake": 3, "unsat": 4, "prev_total": 6, "diff": 1, "contact": "余广元", "manager": "李嘉琦"}, {"name": "广州晟丽—航海学院（黄埔）（高校配送）", "total": 7, "timeout": 5, "no_deliver": 0, "early_fake": 1, "unsat": 2, "prev_total": 2, "diff": 5, "contact": "余广元", "manager": "钟其沃"}, {"name": "广州晟丽-广州工程技术职业学院校外站（从化）（⾼校配送）", "total": 3, "timeout": 0, "no_deliver": 0, "early_fake": 2, "unsat": 1, "prev_total": 5, "diff": -2, "contact": "余广元", "manager": "宋鑫涛"}, {"name": "广州晟丽-增城科教城大学城站（高校配送）", "total": 3, "timeout": 0, "no_deliver": 0, "early_fake": 3, "unsat": 0, "prev_total": 5, "diff": -2, "contact": "黄润彬", "manager": "黄润彬"}, {"name": "广州晟丽-广州大学（桂花岗）（高校配送）", "total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 1, "prev_total": 0, "diff": 2, "contact": "余广元", "manager": "廖文浩"}, {"name": "广州晟丽—广警嘉禾站 （高校配送）", "total": 2, "timeout": 1, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 3, "diff": -1, "contact": "余广元", "manager": "余金活"}, {"name": "广州晟丽-广东轻工职业技术学院（新港）（⾼校配送）", "total": 2, "timeout": 0, "no_deliver": 1, "early_fake": 1, "unsat": 0, "prev_total": 0, "diff": 2, "contact": "余广元", "manager": "高东铭"}, {"name": "广州晟丽-私立华联站（高校配送）", "total": 2, "timeout": 0, "no_deliver": 1, "early_fake": 0, "unsat": 1, "prev_total": 1, "diff": 1, "contact": "余广元", "manager": "唐程云"}, {"name": "广州晟丽-广东交通职业技术学院（花都）（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 1, "diff": 0, "contact": "余广元", "manager": "莫水庆"}, {"name": "广州晟丽-广东省外语艺术职业学院（龙洞）（⾼校配送）", "total": 1, "timeout": 0, "no_deliver": 1, "early_fake": 0, "unsat": 0, "prev_total": 1, "diff": 0, "contact": "余广元", "manager": "曾概龙"}], "bullets": [{"level": "good", "text": "6/11 总单量 30 单，环比 -1 单 (↓3%)，有改善"}, {"level": "info", "text": "主要品类：提前/虚假 13 单（占 43%），较前日 -6 单"}, {"level": "bad", "text": "⚠ 广州晟丽—航海学院（黄埔）（高校配送） 当日 7 单，环比 +5 单（2→7），恶化"}, {"level": "good", "text": "✓ 广州晟丽-广州软件学院（从化）（⾼校配送） 当日 0 单，环比 -6 单（6→0），改善"}]}, "珠海市智创未来信息技术有限公司": {"series": [46, 16, 21, 13, 19, 17, 13, 26, 18, 52, 27], "cat_series": {"timeout": [10, 3, 0, 0, 1, 0, 0, 7, 1, 15, 2], "no_deliver": [6, 0, 0, 0, 0, 0, 0, 3, 2, 8, 12], "early_fake": [22, 9, 13, 10, 12, 12, 8, 10, 11, 24, 10], "unsat": [10, 5, 11, 4, 9, 6, 6, 7, 8, 7, 5]}, "latest": {"total": 27, "timeout": 2, "no_deliver": 12, "early_fake": 10, "unsat": 5, "riders": 9}, "prev_total": 52, "sites": [{"name": "珠海智创-南方医科大学站（高校配送）", "total": 18, "timeout": 2, "no_deliver": 12, "early_fake": 4, "unsat": 1, "prev_total": 43, "diff": -25, "contact": "梁铭智", "manager": "闫国晋"}, {"name": "珠海智创-广东生态工程职业学院校外站（高校配送）", "total": 9, "timeout": 0, "no_deliver": 0, "early_fake": 6, "unsat": 4, "prev_total": 9, "diff": 0, "contact": "梁铭智", "manager": "邹浩"}], "bullets": [{"level": "good", "text": "6/11 总单量 27 单，环比 -25 单 (↓48%)，有改善"}, {"level": "info", "text": "主要品类：未妥投 12 单（占 44%），较前日 +4 单"}, {"level": "good", "text": "✓ 珠海智创-南方医科大学站（高校配送） 当日 18 单，环比 -25 单（43→18），改善"}]}, "深圳市麻豆人配送服务有限公司": {"series": [109, 39, 48, 52, 45, 105, 29, 36, 23, 25, 25], "cat_series": {"timeout": [2, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0], "no_deliver": [1, 1, 1, 1, 0, 2, 0, 0, 0, 0, 0], "early_fake": [60, 26, 24, 22, 24, 72, 14, 24, 6, 15, 12], "unsat": [50, 11, 27, 29, 24, 37, 15, 13, 17, 11, 14]}, "latest": {"total": 25, "timeout": 0, "no_deliver": 0, "early_fake": 12, "unsat": 14, "riders": 18}, "prev_total": 25, "sites": [{"name": "麻豆人-番禺区大学城站（高校配送）", "total": 24, "timeout": 0, "no_deliver": 0, "early_fake": 12, "unsat": 13, "prev_total": 24, "diff": 0, "contact": "阮畅", "manager": "张勇"}, {"name": "麻豆人-广东外语外贸大学（大学城校区）校内站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 1, "prev_total": 1, "diff": 0, "contact": "阮畅", "manager": "张勇"}], "bullets": [{"level": "flat", "text": "6/11 总单量 25 单，与前日持平"}, {"level": "info", "text": "主要品类：不满意 14 单（占 56%），较前日 +3 单"}]}, "广州同学帮信息科技有限公司": {"series": [0, 0, 0, 381, 3, 3, 2, 8, 3, 10, 19], "cat_series": {"timeout": [0, 0, 0, 380, 0, 0, 0, 0, 0, 0, 15], "no_deliver": [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0], "early_fake": [0, 0, 0, 0, 2, 3, 1, 7, 2, 9, 4], "unsat": [0, 0, 0, 0, 1, 1, 1, 2, 1, 1, 1]}, "latest": {"total": 19, "timeout": 15, "no_deliver": 0, "early_fake": 4, "unsat": 1, "riders": 3}, "prev_total": 10, "sites": [{"name": "同学帮-广州南方学院站（高校配送）", "total": 19, "timeout": 15, "no_deliver": 0, "early_fake": 4, "unsat": 1, "prev_total": 10, "diff": 9, "contact": "湛镇澎", "manager": "黎熟佳"}], "bullets": [{"level": "bad", "text": "6/11 总单量 19 单，环比 +9 单 (↑90%)，恶化明显"}, {"level": "info", "text": "主要品类：T30 超时 15 单（占 79%），较前日 +15 单"}, {"level": "bad", "text": "⚠ 同学帮-广州南方学院站（高校配送） 当日 19 单，环比 +9 单（10→19），恶化"}]}, "深圳市迅享生活科技有限公司": {"series": [17, 6, 7, 5, 24, 29, 11, 12, 34, 24, 16], "cat_series": {"timeout": [2, 1, 0, 0, 0, 5, 1, 2, 0, 1, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "early_fake": [4, 2, 4, 1, 19, 14, 7, 6, 25, 18, 7], "unsat": [11, 3, 4, 4, 6, 10, 3, 5, 9, 5, 9]}, "latest": {"total": 16, "timeout": 0, "no_deliver": 0, "early_fake": 7, "unsat": 9, "riders": 10}, "prev_total": 24, "sites": [{"name": "迅享生活科技—华农站（高校配送）", "total": 16, "timeout": 0, "no_deliver": 0, "early_fake": 7, "unsat": 9, "prev_total": 24, "diff": -8, "contact": "陈乙丙", "manager": "陈乙丙"}], "bullets": [{"level": "good", "text": "6/11 总单量 16 单，环比 -8 单 (↓33%)，有改善"}, {"level": "info", "text": "主要品类：不满意 9 单（占 56%），较前日 +4 单"}, {"level": "good", "text": "✓ 迅享生活科技—华农站（高校配送） 当日 16 单，环比 -8 单（24→16），改善"}]}, "优地科技(无锡)有限公司": {"series": [44, 15, 15, 17, 10, 13, 8, 14, 10, 41, 13], "cat_series": {"timeout": [5, 0, 1, 5, 1, 2, 3, 1, 1, 5, 5], "no_deliver": [0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0], "early_fake": [37, 15, 13, 12, 8, 9, 4, 11, 9, 33, 8], "unsat": [2, 1, 1, 0, 1, 1, 0, 1, 0, 2, 0]}, "latest": {"total": 13, "timeout": 5, "no_deliver": 0, "early_fake": 8, "unsat": 0, "riders": 5}, "prev_total": 41, "sites": [{"name": "深圳优地-广东行政学院站（高校配送）", "total": 7, "timeout": 4, "no_deliver": 0, "early_fake": 3, "unsat": 0, "prev_total": 28, "diff": -21, "contact": "冯少锋", "manager": "吴煌"}, {"name": "深圳优地-广州仲恺任意门站（高校配送）", "total": 5, "timeout": 0, "no_deliver": 0, "early_fake": 5, "unsat": 0, "prev_total": 8, "diff": -3, "contact": "刘帅", "manager": "刘帅"}, {"name": "深圳优地-广州城市理工学院（高校配送）", "total": 1, "timeout": 1, "no_deliver": 0, "early_fake": 0, "unsat": 0, "prev_total": 5, "diff": -4, "contact": "冯少锋", "manager": "钟瑞华"}], "bullets": [{"level": "good", "text": "6/11 总单量 13 单，环比 -28 单 (↓68%)，有改善"}, {"level": "info", "text": "主要品类：提前/虚假 8 单（占 62%），较前日 -25 单"}, {"level": "good", "text": "✓ 深圳优地-广东行政学院站（高校配送） 当日 7 单，环比 -21 单（28→7），改善"}]}, "广东集一供应链有限公司": {"series": [10, 5, 4, 6, 3, 5, 2, 1, 4, 6, 11], "cat_series": {"timeout": [4, 1, 3, 4, 1, 5, 2, 0, 3, 4, 9], "no_deliver": [4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1], "early_fake": [2, 0, 1, 2, 1, 0, 0, 1, 1, 2, 1], "unsat": [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0]}, "latest": {"total": 11, "timeout": 9, "no_deliver": 1, "early_fake": 1, "unsat": 0, "riders": 5}, "prev_total": 6, "sites": [{"name": "集一-广州华南商贸职业学院（高校配送）", "total": 9, "timeout": 9, "no_deliver": 0, "early_fake": 0, "unsat": 0, "prev_total": 0, "diff": 9, "contact": "房庆侨", "manager": "房庆侨"}, {"name": "集一-广东行政职业学院花都校区站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 0, "diff": 1, "contact": "房庆侨", "manager": "韦强"}, {"name": "集一-广州南洋理工职业学院站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 1, "early_fake": 0, "unsat": 0, "prev_total": 0, "diff": 1, "contact": "房庆侨", "manager": "黄灿雄"}], "bullets": [{"level": "bad", "text": "6/11 总单量 11 单，环比 +5 单 (↑83%)，恶化明显"}, {"level": "info", "text": "主要品类：T30 超时 9 单（占 82%），较前日 +5 单"}, {"level": "bad", "text": "⚠ 集一-广州华南商贸职业学院（高校配送） 当日 9 单（前日 0 单），新增高单量站点"}, {"level": "good", "text": "✓ 集一-广东青年职业学院白云校区站（高校配送） 当日 0 单，环比 -6 单（6→0），改善"}]}, "广州易送达科技有限公司": {"series": [17, 18, 15, 10, 5, 14, 10, 8, 17, 11, 5], "cat_series": {"timeout": [3, 6, 0, 3, 1, 6, 1, 0, 11, 2, 0], "no_deliver": [0, 2, 1, 0, 1, 1, 1, 0, 0, 0, 1], "early_fake": [10, 10, 11, 6, 2, 5, 4, 7, 2, 6, 2], "unsat": [4, 1, 3, 2, 1, 3, 5, 1, 4, 3, 2]}, "latest": {"total": 5, "timeout": 0, "no_deliver": 1, "early_fake": 2, "unsat": 2, "riders": 5}, "prev_total": 11, "sites": [{"name": "广州易送达—金融学院校外站（高校配送）", "total": 3, "timeout": 0, "no_deliver": 1, "early_fake": 1, "unsat": 1, "prev_total": 8, "diff": -5, "contact": "赵闯", "manager": "赵闯"}, {"name": "广州易送达-广东生态工程职业学院校内站（⾼校配送）", "total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 1, "prev_total": 3, "diff": -1, "contact": "赵闯", "manager": "杨少波"}], "bullets": [{"level": "good", "text": "6/11 总单量 5 单，环比 -6 单 (↓55%)，有改善"}, {"level": "info", "text": "主要品类：提前/虚假 2 单（占 40%），较前日 -4 单"}, {"level": "good", "text": "✓ 广州易送达—金融学院校外站（高校配送） 当日 3 单，环比 -5 单（8→3），改善"}]}, "松严科技（广州）有限公司": {"series": [9, 7, 8, 14, 5, 5, 5, 5, 4, 8, 5], "cat_series": {"timeout": [0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0], "no_deliver": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], "early_fake": [5, 7, 7, 7, 3, 3, 5, 4, 3, 3, 4], "unsat": [4, 1, 1, 2, 2, 1, 0, 2, 1, 0, 1]}, "latest": {"total": 5, "timeout": 0, "no_deliver": 0, "early_fake": 4, "unsat": 1, "riders": 3}, "prev_total": 8, "sites": [{"name": "广州松严-广州涉外经济职业技术学院任意门店（高校配送）", "total": 4, "timeout": 0, "no_deliver": 0, "early_fake": 3, "unsat": 1, "prev_total": 5, "diff": -1, "contact": "刘小严", "manager": "唐梓浩"}, {"name": "广州松严-广州番禺职业技术学院任意门店（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 3, "diff": -2, "contact": "刘小严", "manager": "刘越"}], "bullets": [{"level": "good", "text": "6/11 总单量 5 单，环比 -3 单 (↓38%)，有改善"}, {"level": "info", "text": "主要品类：提前/虚假 4 单（占 80%），较前日 +1 单"}]}, "深圳市顺丰同城物流有限公司广州分公司": {"series": [2, 5, 2, 1, 2, 2, 2, 7, 2, 0, 4], "cat_series": {"timeout": [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [1, 0, 1, 1, 1, 0, 1, 4, 0, 0, 2], "unsat": [2, 3, 1, 1, 1, 2, 1, 4, 2, 0, 2]}, "latest": {"total": 4, "timeout": 0, "no_deliver": 0, "early_fake": 2, "unsat": 2, "riders": 1}, "prev_total": 0, "sites": [{"name": "顺丰同城-中山大学越秀校区（高校配送）", "total": 4, "timeout": 0, "no_deliver": 0, "early_fake": 2, "unsat": 2, "prev_total": 0, "diff": 4, "contact": "罗鸿杰", "manager": "姚润生"}], "bullets": [{"level": "warn", "text": "6/11 出现 4 单严重不完美（前日 0 单），需关注"}, {"level": "info", "text": "主要品类：提前/虚假 2 单（占 50%），较前日 +2 单"}]}, "广州极速达网络科技有限公司": {"series": [17, 3, 1, 3, 4, 8, 4, 4, 1, 4, 3], "cat_series": {"timeout": [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [15, 1, 0, 2, 1, 8, 2, 2, 0, 2, 3], "unsat": [3, 2, 1, 0, 4, 0, 2, 2, 1, 2, 1]}, "latest": {"total": 3, "timeout": 0, "no_deliver": 0, "early_fake": 3, "unsat": 1, "riders": 2}, "prev_total": 4, "sites": [{"name": "极速达-医科大（高校配送）", "total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 2, "unsat": 1, "prev_total": 2, "diff": 0, "contact": "祝耀", "manager": "祝耀"}, {"name": "极速达-女子学院站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 1, "diff": 0, "contact": "祝耀", "manager": "陈先俊"}], "bullets": [{"level": "good", "text": "6/11 总单量 3 单，环比 -1 单 (↓25%)，有改善"}, {"level": "info", "text": "主要品类：提前/虚假 3 单（占 100%），较前日 +1 单"}]}, "珠海煜明数字科技有限公司": {"series": [16, 4, 2, 6, 3, 9, 6, 5, 9, 1, 3], "cat_series": {"timeout": [5, 1, 0, 2, 0, 0, 1, 0, 1, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [8, 2, 1, 4, 0, 3, 0, 1, 4, 0, 0], "unsat": [3, 1, 1, 1, 3, 6, 5, 4, 4, 1, 3]}, "latest": {"total": 3, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 3, "riders": 2}, "prev_total": 1, "sites": [{"name": "珠海煜明-中山大学广州南校区站（高校配送）", "total": 3, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 3, "prev_total": 1, "diff": 2, "contact": "周诗殷", "manager": "蔡海记"}], "bullets": [{"level": "mild", "text": "6/11 总单量 3 单，环比 +2 单 (↑200%)"}, {"level": "info", "text": "主要品类：不满意 3 单（占 100%），较前日 +2 单"}]}, "广州荣榕科技服务有限公司": {"series": [5, 3, 5, 2, 2, 0, 1, 3, 2, 2, 2], "cat_series": {"timeout": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [4, 1, 5, 1, 2, 0, 1, 3, 2, 1, 1], "unsat": [2, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0]}, "latest": {"total": 2, "timeout": 1, "no_deliver": 0, "early_fake": 1, "unsat": 0, "riders": 2}, "prev_total": 2, "sites": [{"name": "广州荣榕-岭南学院站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 2, "diff": -1, "contact": "李绪明", "manager": "李绪明"}, {"name": "广州荣榕-广科工贸站（高校配送）", "total": 1, "timeout": 1, "no_deliver": 0, "early_fake": 0, "unsat": 0, "prev_total": 0, "diff": 1, "contact": "李绪明", "manager": "子杰"}], "bullets": [{"level": "flat", "text": "6/11 总单量 2 单，与前日持平"}, {"level": "info", "text": "主要品类：T30 超时 1 单（占 50%），较前日 +1 单"}]}, "广州云闪送科技服务有限公司": {"series": [2, 4, 7, 4, 0, 7, 0, 5, 2, 2, 2], "cat_series": {"timeout": [0, 0, 3, 0, 0, 6, 0, 0, 0, 0, 2], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], "early_fake": [2, 4, 2, 3, 0, 1, 0, 3, 0, 2, 0], "unsat": [0, 0, 3, 1, 0, 0, 0, 2, 1, 0, 0]}, "latest": {"total": 2, "timeout": 2, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 2}, "prev_total": 2, "sites": [{"name": "广州云闪送-松田职业学院（高校配送）", "total": 2, "timeout": 2, "no_deliver": 0, "early_fake": 0, "unsat": 0, "prev_total": 2, "diff": 0, "contact": "许文萌", "manager": "刘明杰"}], "bullets": [{"level": "flat", "text": "6/11 总单量 2 单，与前日持平"}, {"level": "info", "text": "主要品类：T30 超时 2 单（占 100%），较前日 +2 单"}]}, "广州秉盛电子商务有限公司": {"series": [2, 1, 2, 1, 2, 5, 3, 1, 1, 1, 2], "cat_series": {"timeout": [0, 0, 0, 1, 0, 3, 1, 0, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [2, 1, 2, 0, 1, 1, 0, 1, 1, 1, 1], "unsat": [0, 0, 0, 0, 1, 1, 2, 0, 0, 0, 1]}, "latest": {"total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 1, "riders": 2}, "prev_total": 1, "sites": [{"name": "广州秉盛-广东交通职业技术学院（天河校区）（高校配送）", "total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 1, "prev_total": 1, "diff": 1, "contact": "梁胜祥", "manager": "梁胜祥"}], "bullets": [{"level": "mild", "text": "6/11 总单量 2 单，环比 +1 单 (↑100%)"}, {"level": "info", "text": "主要品类：提前/虚假 1 单（占 50%）"}]}, "广州市智安信息科技有限公司": {"series": [1, 2, 2, 4, 2, 3, 1, 1, 1, 2, 2], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0], "early_fake": [1, 2, 1, 2, 1, 3, 1, 1, 1, 2, 2], "unsat": [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0]}, "latest": {"total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 2, "unsat": 0, "riders": 1}, "prev_total": 2, "sites": [{"name": "智安信息-花都广二师站（高校配送）", "total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 2, "unsat": 0, "prev_total": 2, "diff": 0, "contact": "刘舒亮", "manager": "陈玟霖"}], "bullets": [{"level": "flat", "text": "6/11 总单量 2 单，与前日持平"}, {"level": "info", "text": "主要品类：提前/虚假 2 单（占 100%）"}]}, "广州胜凯者运输有限公司": {"series": [5, 8, 10, 4, 5, 10, 9, 5, 78, 4, 2], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 74, 0, 0], "early_fake": [4, 5, 8, 3, 3, 9, 9, 3, 3, 2, 2], "unsat": [1, 3, 2, 2, 2, 1, 0, 3, 1, 2, 0]}, "latest": {"total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 2, "unsat": 0, "riders": 2}, "prev_total": 4, "sites": [{"name": "广州胜凯-水利水电校内校外站（高校配送）", "total": 2, "timeout": 0, "no_deliver": 0, "early_fake": 2, "unsat": 0, "prev_total": 2, "diff": 0, "contact": "阿凯", "manager": "煜枝"}], "bullets": [{"level": "good", "text": "6/11 总单量 2 单，环比 -2 单 (↓50%)，有改善"}, {"level": "info", "text": "主要品类：提前/虚假 2 单（占 100%）"}]}, "广州楠蓓莱科技有限公司": {"series": [0, 0, 0, 1, 0, 0, 0, 0, 2, 3, 2], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0], "unsat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]}, "latest": {"total": 2, "timeout": 2, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 1}, "prev_total": 3, "sites": [{"name": "广州楠蓓莱-广工程从化校区（高校配送）", "total": 2, "timeout": 2, "no_deliver": 0, "early_fake": 0, "unsat": 0, "prev_total": 3, "diff": -1, "contact": "阿杰", "manager": "阿杰"}], "bullets": [{"level": "good", "text": "6/11 总单量 2 单，环比 -1 单 (↓33%)，有改善"}, {"level": "info", "text": "主要品类：T30 超时 2 单（占 100%），较前日 +1 单"}]}, "广州万物智联技术有限公司": {"series": [0, 0, 1, 1, 0, 2, 0, 1, 1, 0, 1], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [0, 0, 1, 1, 0, 2, 0, 1, 1, 0, 1], "unsat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "latest": {"total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "riders": 1}, "prev_total": 0, "sites": [{"name": "万物智联-广州铁路科教城校内站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 0, "diff": 1, "contact": "王云飞", "manager": "李梁"}], "bullets": [{"level": "warn", "text": "6/11 出现 1 单严重不完美（前日 0 单），需关注"}, {"level": "info", "text": "主要品类：提前/虚假 1 单（占 100%），较前日 +1 单"}]}, "中山市铭捷商务服务有限公司": {"series": [4, 1, 0, 5, 19, 1, 0, 0, 3, 1, 1], "cat_series": {"timeout": [2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 1], "no_deliver": [0, 0, 0, 2, 13, 0, 0, 0, 0, 0, 0], "early_fake": [1, 1, 0, 2, 1, 0, 0, 0, 1, 0, 0], "unsat": [1, 0, 0, 2, 1, 1, 0, 0, 2, 1, 0]}, "latest": {"total": 1, "timeout": 1, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 1}, "prev_total": 1, "sites": [{"name": "铭捷-工程龙洞校区站（高校配送）", "total": 1, "timeout": 1, "no_deliver": 0, "early_fake": 0, "unsat": 0, "prev_total": 0, "diff": 1, "contact": "邓晓德", "manager": "邓晓德"}], "bullets": [{"level": "flat", "text": "6/11 总单量 1 单，与前日持平"}, {"level": "info", "text": "主要品类：T30 超时 1 单（占 100%），较前日 +1 单"}]}, "广州闪送侠信息科技有限公司": {"series": [3, 2, 5, 3, 5, 16, 2, 6, 2, 4, 1], "cat_series": {"timeout": [0, 1, 0, 0, 0, 0, 0, 3, 0, 1, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], "early_fake": [2, 0, 5, 3, 5, 15, 1, 2, 1, 1, 1], "unsat": [1, 1, 0, 0, 0, 1, 1, 1, 1, 2, 0]}, "latest": {"total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "riders": 1}, "prev_total": 4, "sites": [{"name": "闪送侠配送-广州增城华商学院任意门站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 2, "diff": -1, "contact": "湛镇澎", "manager": "谢伟杰"}], "bullets": [{"level": "good", "text": "6/11 总单量 1 单，环比 -3 单 (↓75%)，有改善"}, {"level": "info", "text": "主要品类：提前/虚假 1 单（占 100%）"}]}, "江苏行之途智能科技有限公司": {"series": [0, 0, 0, 2, 2, 5, 1, 14, 0, 0, 1], "cat_series": {"timeout": [0, 0, 0, 0, 0, 2, 1, 12, 0, 0, 0], "no_deliver": [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1], "early_fake": [0, 0, 0, 1, 1, 3, 0, 2, 0, 0, 0], "unsat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "latest": {"total": 1, "timeout": 0, "no_deliver": 1, "early_fake": 0, "unsat": 0, "riders": 1}, "prev_total": 0, "sites": [{"name": "广州行之途-广州医科大学（番禺校区站）-任意门站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 1, "early_fake": 0, "unsat": 0, "prev_total": 0, "diff": 1, "contact": "竭强", "manager": "陈昌灿"}], "bullets": [{"level": "warn", "text": "6/11 出现 1 单严重不完美（前日 0 单），需关注"}, {"level": "info", "text": "主要品类：未妥投 1 单（占 100%），较前日 +1 单"}]}, "广州餐谋天下商务有限公司": {"series": [0, 5, 0, 1, 3, 0, 1, 1, 1, 0, 1], "cat_series": {"timeout": [0, 5, 0, 0, 2, 0, 0, 1, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0], "early_fake": [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1], "unsat": [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]}, "latest": {"total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "riders": 1}, "prev_total": 0, "sites": [{"name": "餐谋天下-白云文艺职业学院校内站（高校配送）", "total": 1, "timeout": 0, "no_deliver": 0, "early_fake": 1, "unsat": 0, "prev_total": 0, "diff": 1, "contact": "", "manager": ""}], "bullets": [{"level": "warn", "text": "6/11 出现 1 单严重不完美（前日 0 单），需关注"}, {"level": "info", "text": "主要品类：提前/虚假 1 单（占 100%），较前日 +1 单"}]}, "广州资进餐饮管理有限公司": {"series": [2, 4, 0, 1, 1, 0, 0, 1, 0, 1, 0], "cat_series": {"timeout": [1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0], "early_fake": [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0], "unsat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]}, "latest": {"total": 0, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 0}, "prev_total": 1, "sites": [], "bullets": [{"level": "good", "text": "6/11 总单量 0 单，环比 -1 单 (↓100%)，有改善"}]}, "广州永乐餐饮文化有限责任公司": {"series": [0, 0, 3, 1, 0, 3, 0, 9, 2, 1, 0], "cat_series": {"timeout": [0, 0, 2, 1, 0, 0, 0, 8, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [0, 0, 1, 0, 0, 3, 0, 1, 2, 0, 0], "unsat": [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]}, "latest": {"total": 0, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 0}, "prev_total": 1, "sites": [], "bullets": [{"level": "good", "text": "6/11 总单量 0 单，环比 -1 单 (↓100%)，有改善"}]}, "广州市特牛信息科技有限公司": {"series": [15, 0, 0, 16, 0, 0, 0, 0, 1, 3, 0], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [2, 0, 0, 16, 0, 0, 0, 0, 1, 3, 0], "early_fake": [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "unsat": [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "latest": {"total": 0, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 0}, "prev_total": 3, "sites": [], "bullets": [{"level": "good", "text": "6/11 总单量 0 单，环比 -3 单 (↓100%)，有改善"}]}, "南宁市联睿盟天科技有限公司": {"series": [1, 0, 2, 1, 0, 1, 0, 1, 0, 0, 0], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "early_fake": [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0], "unsat": [0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0]}, "latest": {"total": 0, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 0}, "prev_total": 0, "sites": [], "bullets": [{"level": "flat", "text": "6/11 总单量 0 单，与前日持平"}]}, "深圳市阳光快送科技有限公司": {"series": [7, 3, 2, 2, 3, 2, 3, 4, 0, 2, 0], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0], "early_fake": [6, 3, 2, 2, 2, 2, 2, 2, 0, 0, 0], "unsat": [2, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0]}, "latest": {"total": 0, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 0}, "prev_total": 2, "sites": [], "bullets": [{"level": "good", "text": "6/11 总单量 0 单，环比 -2 单 (↓100%)，有改善"}]}, "蜂鸟众包": {"series": [1, 0, 0, 0, 0, 1, 0, 2, 1, 0, 0], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [1, 0, 0, 0, 0, 1, 0, 2, 1, 0, 0], "early_fake": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "unsat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "latest": {"total": 0, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 0}, "prev_total": 0, "sites": [], "bullets": [{"level": "flat", "text": "6/11 总单量 0 单，与前日持平"}]}, "广州优送达信息科技有限公司": {"series": [1, 0, 1, 1, 1, 0, 0, 4, 4, 0, 0], "cat_series": {"timeout": [0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], "early_fake": [1, 0, 1, 1, 1, 0, 0, 0, 2, 0, 0], "unsat": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]}, "latest": {"total": 0, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 0}, "prev_total": 0, "sites": [], "bullets": [{"level": "flat", "text": "6/11 总单量 0 单，与前日持平"}]}, "广州云馨物流配送有限公司": {"series": [0, 1, 1, 0, 1, 0, 1, 2, 0, 0, 0], "cat_series": {"timeout": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], "no_deliver": [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], "early_fake": [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0], "unsat": [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0]}, "latest": {"total": 0, "timeout": 0, "no_deliver": 0, "early_fake": 0, "unsat": 0, "riders": 0}, "prev_total": 0, "sites": [], "bullets": [{"level": "flat", "text": "6/11 总单量 0 单，与前日持平"}]}};
+const AGENT_NAMES = ["厦门派得快配送服务有限公司", "广州晟丽科技有限公司", "珠海市智创未来信息技术有限公司", "深圳市麻豆人配送服务有限公司", "广州同学帮信息科技有限公司", "深圳市迅享生活科技有限公司", "优地科技(无锡)有限公司", "广东集一供应链有限公司", "广州易送达科技有限公司", "松严科技（广州）有限公司", "深圳市顺丰同城物流有限公司广州分公司", "广州极速达网络科技有限公司", "珠海煜明数字科技有限公司", "广州荣榕科技服务有限公司", "广州云闪送科技服务有限公司", "广州秉盛电子商务有限公司", "广州市智安信息科技有限公司", "广州胜凯者运输有限公司", "广州楠蓓莱科技有限公司", "广州万物智联技术有限公司", "中山市铭捷商务服务有限公司", "广州闪送侠信息科技有限公司", "江苏行之途智能科技有限公司", "广州餐谋天下商务有限公司", "广州资进餐饮管理有限公司", "广州永乐餐饮文化有限责任公司", "广州市特牛信息科技有限公司", "南宁市联睿盟天科技有限公司", "深圳市阳光快送科技有限公司", "蜂鸟众包", "广州优送达信息科技有限公司", "广州云馨物流配送有限公司"];
+const DEFAULT = "厦门派得快配送服务有限公司";
+
+let currentAgent = DEFAULT;
+let chart = null;
+
+function fmt(n) { return n == null ? '0' : String(n); }
+function diffSpan(diff) {
+  if (diff > 0) return `<span class="diff-up">+${diff}</span>`;
+  if (diff < 0) return `<span class="diff-down">${diff}</span>`;
+  return `<span class="diff-flat">0</span>`;
+}
+
+function renderSummary(rec) {
+  const prev = rec.prev_total || 0, cur = rec.latest.total;
+  let chTxt = '与前日持平', cls = '';
+  if (cur > prev) { chTxt = `↑${cur-prev} 单 (${prev?Math.round((cur-prev)/prev*100):'∞'}%)`; cls = 'bad'; }
+  else if (cur < prev) { chTxt = `↓${prev-cur} 单 (-${Math.round((prev-cur)/prev*100)}%)`; cls = 'good'; }
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="card ${cls}"><div class="label">当日总单量</div><div class="value">${fmt(cur)}</div><div class="change">${chTxt}</div></div>
+    <div class="card"><div class="label">T30 超时</div><div class="value">${fmt(rec.latest.timeout)}</div><div class="change">${cur?Math.round(rec.latest.timeout/cur*100):0}%</div></div>
+    <div class="card"><div class="label">未妥投</div><div class="value">${fmt(rec.latest.no_deliver)}</div><div class="change">${cur?Math.round(rec.latest.no_deliver/cur*100):0}%</div></div>
+    <div class="card"><div class="label">提前/虚假</div><div class="value">${fmt(rec.latest.early_fake)}</div><div class="change">${cur?Math.round(rec.latest.early_fake/cur*100):0}%</div></div>
+    <div class="card"><div class="label">不满意</div><div class="value">${fmt(rec.latest.unsat)}</div><div class="change">${cur?Math.round(rec.latest.unsat/cur*100):0}%</div></div>
+  `;
+}
+
+function renderChart(rec) {
+  if (chart) chart.destroy();
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: LABELS,
+      datasets: [
+        { label:'总单量', data:rec.series, borderColor:'#635bff', backgroundColor:'rgba(99,91,255,0.08)', fill:true, tension:0.3, borderWidth:2.5, pointRadius:4, pointHoverRadius:6 },
+        { label:'T30 超时', data:rec.cat_series.timeout, borderColor:'#ff9500', borderWidth:1.8, tension:0.3, pointRadius:3, hidden:false },
+        { label:'未妥投', data:rec.cat_series.no_deliver, borderColor:'#dc2626', borderWidth:1.8, tension:0.3, pointRadius:3, hidden:false },
+        { label:'提前/虚假', data:rec.cat_series.early_fake, borderColor:'#16a34a', borderWidth:1.8, tension:0.3, pointRadius:3, hidden:false },
+        { label:'不满意', data:rec.cat_series.unsat, borderColor:'#a855f7', borderWidth:1.8, tension:0.3, pointRadius:3, hidden:false }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:12}, padding:12, usePointStyle:true } } },
+      scales:{ y:{ beginAtZero:true, grid:{ color:'rgba(0,0,0,0.04)' } }, x:{ grid:{ display:false } } }
+    }
+  });
+}
+
+function renderReview(rec) {
+  const ul = document.getElementById('reviewList');
+  ul.innerHTML = rec.bullets.map(b => `<li class="${b.level}">${b.text}</li>`).join('');
+  if (!rec.bullets.length) ul.innerHTML = '<li class="flat">无显著变化</li>';
+}
+
+function renderStations(rec) {
+  const tb = document.getElementById('stationBody');
+  if (!rec.sites.length) { tb.innerHTML = '<tr><td colspan="8" class="empty">该代理商当日无单</td></tr>'; return; }
+  tb.innerHTML = rec.sites.map(s => {
+    const ppl = [];
+    if (s.contact) ppl.push(`<span class="contacts-pill">@${s.contact}</span>`);
+    if (s.manager && s.manager !== s.contact) ppl.push(`<span class="contacts-pill">@${s.manager}</span>`);
+    return `<tr>
+      <td>${s.name}</td>
+      <td class="num"><b>${s.total}</b></td>
+      <td class="num">${diffSpan(s.diff)}</td>
+      <td class="num">${s.timeout||0}</td>
+      <td class="num">${s.no_deliver||0}</td>
+      <td class="num">${s.early_fake||0}</td>
+      <td class="num">${s.unsat||0}</td>
+      <td>${ppl.join('')||'<span style=\"color:#9ca3af;font-size:11px;\">-</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectAgent(name) {
+  if (!AGENTS[name]) return;
+  currentAgent = name;
+  document.getElementById('agentInput').value = name;
+  const rec = AGENTS[name];
+  renderSummary(rec);
+  renderChart(rec);
+  renderReview(rec);
+  renderStations(rec);
+}
+
+// Combo
+const input = document.getElementById('agentInput');
+const list = document.getElementById('agentList');
+function renderList(filter='') {
+  const f = filter.trim().toLowerCase();
+  const items = AGENT_NAMES.filter(n => !f || n.toLowerCase().includes(f));
+  list.innerHTML = items.map(n => {
+    const cnt = AGENTS[n] ? AGENTS[n].latest.total : 0;
+    return `<div class="combo-item ${n===currentAgent?'active':''}" data-name="${n.replace(/"/g,'&quot;')}"><span>${n}</span><span class="num">${cnt}单</span></div>`;
+  }).join('');
+  list.querySelectorAll('.combo-item').forEach(el => el.addEventListener('mousedown', e => {
+    e.preventDefault();
+    selectAgent(el.dataset.name);
+    closeList();
+  }));
+}
+function openList() { list.classList.add('open'); renderList(input.value); }
+function closeList() { list.classList.remove('open'); }
+input.addEventListener('focus', openList);
+input.addEventListener('input', e => { openList(); renderList(e.target.value); });
+input.addEventListener('blur', () => setTimeout(closeList, 150));
+
+// Copy review
+document.getElementById('copyReview').addEventListener('click', e => {
+  const rec = AGENTS[currentAgent];
+  const lines = [`【${currentAgent}】${LABELS[LABELS.length-1]} 复盘`];
+  rec.bullets.forEach(b => lines.push('· ' + b.text));
+  const txt = lines.join('\n');
+  navigator.clipboard.writeText(txt).then(() => {
+    e.target.textContent = '已复制';
+    e.target.classList.add('copied');
+    setTimeout(() => { e.target.textContent = '复制为文本'; e.target.classList.remove('copied'); }, 1500);
+  });
+});
+
+selectAgent(DEFAULT);
+</script>
+</body>
+</html>
