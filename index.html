@@ -1,91 +1,182 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>玛瑙的小站 - 严重不完美订单报表（6月）</title>
+
 <style>
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
 body {
+
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Segoe UI', sans-serif;
+
   background: #f5f5f7;
+
   min-height: 100vh;
+
   padding: 0 20px 40px;
+
 }
+
 .site-bar { display: flex; align-items: center; padding: 18px 24px; margin-bottom: 32px; }
+
 .site-bar .site-logo {
+
   width: 30px; height: 30px; border-radius: 50%;
+
   background: radial-gradient(circle at 35% 35%, #d8b4fe, #9333ea 40%, #581c87 65%, #2e0a4d 100%);
+
   box-shadow: 0 3px 10px rgba(147,51,234,0.4), inset 0 -3px 6px rgba(0,0,0,0.3);
+
   margin-right: 10px; position: relative; overflow: hidden;
+
 }
+
 .site-bar .site-logo::before {
+
   content: ''; position: absolute; top: 5px; left: 6px; width: 10px; height: 10px;
+
   background: radial-gradient(circle, rgba(255,255,255,0.75), rgba(255,255,255,0) 70%); border-radius: 50%;
+
 }
+
 .site-bar .site-logo::after {
+
   content: ''; position: absolute; top: 3px; right: 7px; width: 4px; height: 4px;
+
   background: rgba(255,255,255,0.55); border-radius: 50%;
+
 }
+
 .site-bar .site-name { font-size: 16px; font-weight: 700; color: #1d1d1f; letter-spacing: 0.3px; }
+
 .container { max-width: 800px; margin: 0 auto; }
+
 .header { text-align: center; margin-bottom: 32px; }
+
 .header h1 { font-size: 28px; font-weight: 700; color: #1d1d1f; margin-bottom: 8px; }
+
 .header p { font-size: 15px; color: #86868b; }
+
 .section-title { font-size: 13px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; margin: 28px 0 14px; padding-left: 4px; }
+
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+
 .card {
+
   background: #fff; border-radius: 16px; padding: 24px 20px; text-align: center;
+
   text-decoration: none; color: #1d1d1f; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
   transition: all 0.2s ease; border: 1px solid rgba(0,0,0,0.04);
+
 }
+
 .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-color: rgba(99,91,255,0.3); }
+
 .card .date-icon {
+
   width: 48px; height: 48px; background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+
   border-radius: 12px; display: flex; align-items: center; justify-content: center;
+
   margin: 0 auto 12px; color: #fff; font-size: 16px; font-weight: 700;
+
 }
+
 .card .date-label { font-size: 15px; font-weight: 600; color: #1d1d1f; }
+
 .card .date-sub { font-size: 12px; color: #86868b; margin-top: 4px; }
+
 .footer { text-align: center; margin-top: 40px; font-size: 13px; color: #86868b; }
+
 </style>
+
 </head>
+
 <body>
+
 <div class="site-bar"><div class="site-logo"></div><span class="site-name">玛瑙的小站</span></div>
+
 <div class="container">
+
   <div class="header">
+
     <h1>严重不完美订单报表 · 6月</h1>
+
     <p>选择日期查看对应报表</p>
+
   </div>
+
   <a class="card" href="daily_report.html" style="display:block;max-width:360px;margin:0 auto 8px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;">
+
     <div style="font-size:20px;font-weight:700;margin-bottom:6px;">📊 改善趋势日报</div>
+
     <div style="font-size:13px;opacity:0.85;">查看不完美订单每日改善趋势与关键指标</div>
+
   </a>
+
   <div class="section-title">每日明细报表</div>
+
   <div class="cards" id="cards"></div>
+
   <div class="footer">数据来源：观星台</div>
+
 </div>
+
 <script>
-const reports = [{date:'0615',month:'6',day:'15'},{date:'0614',month:'6',day:'14'},{date:'0613',month:'6',day:'13'},{date:'0612',month:'6',day:'12'},{date:'0611',month:'6',day:'11'},{date:'0610',month:'6',day:'10'},{date:'0609',month:'6',day:'9'},{date:'0608',month:'6',day:'8'},
+
+const reports = [{date:'0616',month:'6',day:'16'},{date:'0615',month:'6',day:'15'},{date:'0614',month:'6',day:'14'},{date:'0613',month:'6',day:'13'},{date:'0612',month:'6',day:'12'},{date:'0611',month:'6',day:'11'},{date:'0610',month:'6',day:'10'},{date:'0609',month:'6',day:'9'},{date:'0608',month:'6',day:'8'},
+
   { date: '0607', month: '6', day: '7' },
+
   { date: '0606', month: '6', day: '6' },
+
   { date: '0605', month: '6', day: '5' },
+
   { date: '0604', month: '6', day: '4' },
+
   { date: '0603', month: '6', day: '3' },
+
   { date: '0602', month: '6', day: '2' },
+
   { date: '0601', month: '6', day: '1' }];
+
 const container = document.getElementById('cards');
+
 reports.forEach(r => {
+
   const a = document.createElement('a');
+
   a.className = 'card';
+
   a.href = r.date + '.html';
+
   a.innerHTML = `
+
     <div class="date-icon">${r.month}/${r.day}</div>
+
     <div class="date-label">${r.month}月${r.day}日</div>
+
     <div class="date-sub">点击查看报表</div>
+
   `;
+
   container.appendChild(a);
+
 });
+
 </script>
+
 </body>
+
 </html>
+
